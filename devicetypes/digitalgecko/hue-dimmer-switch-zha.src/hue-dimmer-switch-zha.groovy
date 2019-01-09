@@ -1,17 +1,18 @@
 /**
-*  Hue Dimmer Switch
-*
-*  Copyright 2016 Stephen McLaughlin
-*
-*  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License. You may obtain a copy of the License at:
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
-*  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
-*  for the specific language governing permissions and limitations under the License.
-**/
+ *  Hue Dimmer Switch
+ *
+ *  Copyright 2016 Stephen McLaughlin
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License
+ *  
+ *  You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied
+ *  See the License for the specific language governing permissions and limitations under the License.
+ **/
 metadata {
 	definition (name: "Hue Dimmer Switch (ZHA)", namespace: "digitalgecko", author: "Stephen McLaughlin") {
 		capability "Configuration"
@@ -65,19 +66,15 @@ metadata {
 		// }
 	}
 
-
-
 	main "lastAction"
 	details(["lastAction","battery2","refresh","configure"])
 }
 
 // parse events into attributes
 def parse(String description) {
-
 	def msg = zigbee.parse(description)
-
-	//log.warn msg
-	/// Actual code down here
+    log.debug "Parsing: " + description
+	
 	Map map = [:]
 	if (description?.startsWith('catchall:')) {
 		map = parseCatchAllMessage(description)
@@ -88,15 +85,13 @@ def parse(String description) {
 	if (description?.startsWith('enroll request')) {
 		List cmds = enrollResponse()
 		result = cmds?.collect { new physicalgraph.device.HubAction(it) }
-	}
-	else if (description?.startsWith('read attr -')) {
+	} else if (description?.startsWith('read attr -')) {
 		result = parseReportAttributeMessage(description).each { createEvent(it) }
 	}
 
 	return result
-	// TODO: handle 'numberOfButtons' attribute
-
 }
+
 /*
 parseReportAttributeMessage
  */
@@ -107,8 +102,6 @@ private List parseReportAttributeMessage(String description) {
     }
 
     List result = []
-
-
 	// Battery
 	if (descMap.cluster == "0001" && descMap.attrId == "0020") {
 		// log.warn descMap
@@ -116,7 +109,6 @@ private List parseReportAttributeMessage(String description) {
 	}
     
 	return result
-
 }
 
 private boolean shouldProcessMessage(cluster) {
@@ -235,32 +227,11 @@ private Map parseCatchAllMessage(String description) {
 }
 
 def refresh() {
-	// log.debug "Refresh"
-
-	def refreshCmds = []
-	refreshCmds += "st rattr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020"; // WORKS! - Fetches battery from 0x02
-	
-	// configCmds += zigbee.configureReporting(0x406,0x0000, 0x18, 30, 600, null) // motion // confirmed
-
-	// refreshCmds += zigbee.configureReporting(0x000F, 0x0055, 0x10, 30, 30, null);
-	// refreshCmds += "zdo bind 0xDAD6 0x01 0x02 0x000F {00178801103317AA} {}"
-	// refreshCmds += "delay 2000"
-	// refreshCmds += "st cr 0xDAD6 0x02 0x000F 0x0055 0x10 0x001E 0x001E {}"
-	// refreshCmds += "delay 2000"
-
-	// refreshCmds += zigbee.configureReporting(0x000F, 0x006F, 0x18, 0x30, 0x30);
-	// refreshCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0xFC00 {${device.zigbeeId}} {}"
-	// refreshCmds += "delay 2000"
-	// refreshCmds += "st cr 0x${device.deviceNetworkId} 0x02 0xFC00 0x0000 0x18 0x001E 0x001E {}"
-	// refreshCmds += "delay 2000"
-	// log.debug refreshCmds
-
+	def refreshCmds = ["st rattr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020"]; // WORKS! - Fetches battery from 0x02
 	return refreshCmds
 }
 
 def configure() {
-	// String zigbeeId = swapEndianHex(device.hub.zigbeeId)
-	// log.debug "Configiring Reporting and Bindings."
 	def configCmds = []
 
 	// Configure Button Count
@@ -278,9 +249,6 @@ def configure() {
 	configCmds += "zdo bind 0x${device.deviceNetworkId} 0x02 0x02 0x0001 {${device.zigbeeId}} {}"
 	configCmds += "delay 2000"
 	configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x0258 {}"
-	// configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x001e {}"
-
-
 	configCmds += "delay 2000"
 
 	return configCmds + refresh()
@@ -293,8 +261,5 @@ def configureHealthCheck() {
 }
 
 def updated() {
-	// log.debug "in updated()"
-
 	configureHealthCheck()
-
 }
