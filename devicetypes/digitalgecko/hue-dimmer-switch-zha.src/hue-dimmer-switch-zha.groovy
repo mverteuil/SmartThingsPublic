@@ -73,7 +73,7 @@ metadata {
 // parse events into attributes
 def parse(String description) {
 	def msg = zigbee.parse(description)
-    log.debug "Parsing: " + description
+    log.error "Parsing: " + description
 	
 	Map map = [:]
 	if (description?.startsWith('catchall:')) {
